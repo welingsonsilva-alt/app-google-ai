@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Terreiro": {
+      "title": "Terreiro",
+      "description": "A religious temple for Umbanda or Candomblé.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the terreiro" },
+        "address": { "type": "string", "description": "Full address" },
+        "description": { "type": "string", "description": "Brief description of the house" },
+        "type": { "type": "string", "enum": ["Umbanda", "Candomblé", "Misto"], "description": "Religious tradition" },
+        "location": { "type": "object", "description": "Geographic coordinates" },
+        "schedule": { "type": "array", "items": { "type": "string" }, "description": "Weekly schedule of giras/ceremonies" },
+        "photoURL": { "type": "string", "description": "Main photo URL" },
+        "authorUid": { "type": "string", "description": "UID of the user who added this entry" }
+      },
+      "required": ["name", "address", "type"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "A user review for a terreiro.",
+      "type": "object",
+      "properties": {
+        "terreiroId": { "type": "string", "description": "ID of the terreiro being reviewed" },
+        "userUid": { "type": "string", "description": "UID of the reviewer" },
+        "userName": { "type": "string", "description": "Name of the reviewer" },
+        "rating": { "type": "number", "description": "Rating from 1 to 5" },
+        "comment": { "type": "string", "description": "Review text" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["terreiroId", "userUid", "rating"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile information.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "favorites": { "type": "array", "items": { "type": "string" }, "description": "List of favorite terreiro IDs" },
+        "role": { "type": "string", "enum": ["user", "admin"] }
+      }
+    }
+  },
+  "firestore": {
+    "/terreiros/{terreiroId}": {
+      "schema": "Terreiro",
+      "description": "Collection of religious temples."
+    },
+    "/terreiros/{terreiroId}/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Reviews for a specific terreiro."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and settings."
+    }
+  }
+}

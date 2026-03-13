@@ -1,0 +1,7 @@
+{
+  "name": "Axé Finder",
+  "description": "Encontre terreiros de Umbanda e Candomblé, consulte horários de giras e conecte-se com a espiritualidade.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

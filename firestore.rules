@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: terreiros
+    // Fields:
+    //   - name: string (required)
+    //   - address: string (required)
+    //   - description: string
+    //   - type: string (Umbanda, Candomblé, Misto)
+    //   - schedule: list (strings)
+    //   - photoURL: string
+    //   - authorUid: string
+    //
+    // Collection: terreiros/{id}/reviews
+    // Fields:
+    //   - terreiroId: string
+    //   - userUid: string
+    //   - userName: string
+    //   - rating: number (1-5)
+    //   - comment: string
+    //   - createdAt: timestamp
+    //
+    // Collection: users
+    // Fields:
+    //   - displayName: string
+    //   - photoURL: string
+    //   - favorites: list (strings)
+    //   - role: string (user, admin)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "welingson.silva@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidTerreiro(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.address is string && data.address.size() > 0 &&
+             data.type in ['Umbanda', 'Candomblé', 'Misto'];
+    }
+
+    function isValidReview(data) {
+      return data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+             data.userUid == request.auth.uid;
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userId) && 
+        (!('role' in request.resource.data) || request.resource.data.role == resource.data.role || isAdmin());
+    }
+
+    match /terreiros/{terreiroId} {
+      allow read: if true; // Publicly searchable
+      allow create: if isAuthenticated() && isValidTerreiro(request.resource.data);
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.authorUid || isAdmin()) && isValidTerreiro(request.resource.data);
+      allow delete: if isAdmin();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && isValidReview(request.resource.data);
+        allow update: if isAuthenticated() && request.auth.uid == resource.data.userUid && isValidReview(request.resource.data);
+        allow delete: if isAuthenticated() && (request.auth.uid == resource.data.userUid || isAdmin());
+      }
+    }
+    
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}
